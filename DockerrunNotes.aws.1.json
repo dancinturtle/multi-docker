@@ -1,0 +1,49 @@
+// services = container definitions
+// we already have the images on dockerhub, pull them and build them
+
+
+{
+    // tell elastic beanstalk what syntax we're using
+    "AWSEBDockerrunVersion" : 2,
+    // 4 containers in our project
+    "containerDefinitions" : [
+        {
+            "name": "client",
+            "image": "dancinturtle/multi-client",
+            // the hostname will make it possible to have the other containers refer to it
+            "hostname": "client",
+            // if the container is essential, then if it crashes, all other containers will shut down
+            // the only one that we really care about is the nginx routing server
+            // at least one must be essential
+            "essential": false
+        },
+        {
+            "name": "server",
+            "image": "dancinturtle/multi-server",
+            "hostname": "api",
+            "essential": false
+        },
+        {
+            "name": "worker",
+            "image": "dancinturtle/multi-worker",
+            "hostname": "worker",
+            "essential": false
+        },
+        {
+            "name": "nginx",
+            "image": "dancinturtle/multi-nginx",
+            // we don't need a hostname because nothing else reaches out to it
+            "essential": true,
+            // port mapping equivalent of 80:80
+            "portMappings": [
+                {
+                    "hostPort": 80,
+                    "containerPort": 80
+                }
+            ],
+            // links to the other running containers. Links are unidirectional. nginx needs to point to client and server
+            "links": ["client", "server"]
+        }
+
+    ]
+}
