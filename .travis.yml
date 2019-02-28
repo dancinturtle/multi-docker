@@ -1,0 +1,29 @@
+# specify docker as a dependency
+# build test version of react project (could add more if we had the tests ready)
+# run tests
+# build prod versions of all projects
+# push all to docker hub
+# tell eb to update
+
+sudo: required
+
+services:
+  - docker
+
+before_install:
+  - docker build -t dancinturtle/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run dancinturtle/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t dancinturtle/multi-client ./client
+  - docker build -t dancinturtle/multi-nginx ./nginx
+  - docker build -t dancinturtle/multi-server ./server
+  - docker build -t dancinturtle/multi-worker ./worker
+  # login to the docker cli
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  - docker push dancinturtle/multi-client
+  - docker push dancinturtle/multi-nginx
+  - docker push dancinturtle/multi-server
+  - docker push dancinturtle/multi-worker
